@@ -24,10 +24,13 @@ class NetworkManager {
     
     static func download(url: URL) -> AnyPublisher<Data, Error> {
         return URLSession.shared.dataTaskPublisher(for: url)
-            .subscribe(on: DispatchQueue.global(qos: .default))
+        // go on background thread
+//            .subscribe(on: DispatchQueue.global(qos: .default))
         // check that we have good data..
             .tryMap { try handleURLResponse(output: $0, url: url)}
-            .receive(on: DispatchQueue.main)
+        // will know that Publisher fails and if so, it will retry 3x
+        // again, if this server gives a faulty response
+            .retry(3)
         // takes publisher and conver it to AnyPublisher
             .eraseToAnyPublisher()
     }
